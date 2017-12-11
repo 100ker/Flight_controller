@@ -2,7 +2,7 @@
  * @file nRF24L01P.cpp
  *
  * @author Owen Edwards
- * 
+ *
  * @section LICENSE
  *
  * Copyright (c) 2010 Owen Edwards
@@ -68,7 +68,7 @@ typedef enum {
 
 #define _NRF24L01P_SPI_CMD_RD_REG            0x00
 #define _NRF24L01P_SPI_CMD_WR_REG            0x20
-#define _NRF24L01P_SPI_CMD_RD_RX_PAYLOAD     0x61   
+#define _NRF24L01P_SPI_CMD_RD_RX_PAYLOAD     0x61
 #define _NRF24L01P_SPI_CMD_WR_TX_PAYLOAD     0xa0
 #define _NRF24L01P_SPI_CMD_FLUSH_TX          0xe1
 #define _NRF24L01P_SPI_CMD_FLUSH_RX          0xe2
@@ -171,9 +171,9 @@ typedef enum {
  * Methods
  */
 
-nRF24L01P::nRF24L01P(PinName mosi, 
-                     PinName miso, 
-                     PinName sck, 
+nRF24L01P::nRF24L01P(PinName mosi,
+                     PinName miso,
+                     PinName sck,
                      PinName csn,
                      PinName ce,
                      PinName irq) : spi_(mosi, miso, sck), nCS_(csn), ce_(ce), nIRQ_(irq) {
@@ -184,8 +184,7 @@ nRF24L01P::nRF24L01P(PinName mosi,
 
     nCS_ = 1;
 
-    spi_.frequency(_NRF24L01P_SPI_MAX_DATA_RATE/5);     // 2Mbit, 1/5th the maximum transfer rate for the SPI bus
-    spi_.format(8,0);                                   // 8-bit, ClockPhase = 0, ClockPolarity = 0
+    spi_.frequency(_NRF24L01P_SPI_MAX_DATA_RATE/2);     // 2Mbit, 1/5th the maximum transfer rate for the SPI bus
 
     wait_us(_NRF24L01P_TIMING_Tundef2pd_us);    // Wait for Power-on reset
 
@@ -284,7 +283,7 @@ void nRF24L01P::enable(void) {
 
 void nRF24L01P::disable(void) {
 
-//    ce_ = 0;
+    ce_ = 0;
 
 }
 
@@ -511,7 +510,7 @@ int nRF24L01P::getTransferSize(int pipe) {
     int rxPwPxRegister = _NRF24L01P_REG_RX_PW_P0 + ( pipe - NRF24L01P_PIPE_P0 );
 
     int size = getRegister(rxPwPxRegister);
-    
+
     return ( size & _NRF24L01P_RX_PW_Px_MASK );
 
 }
@@ -546,6 +545,18 @@ void nRF24L01P::enableAutoAcknowledge(int pipe) {
 
     setRegister(_NRF24L01P_REG_EN_AA, enAA);
 
+    int dynp = getRegister(_NRF24L01P_REG_DYNPD);
+
+    dynp |= (1 << pipe - NRF24L01P_PIPE_P0);
+
+    setRegister(_NRF24L01P_REG_DYNPD, dynp);
+
+    int feature = getRegister(_NRF24L01P_REG_FEATURE);
+
+    feature |= 1 << 2 | 1 << 1;
+
+    setRegister(_NRF24L01P_REG_FEATURE,feature);
+
 }
 
 
@@ -567,33 +578,33 @@ void nRF24L01P::setRxAddress(unsigned long long address, int width, int pipe) {
     if ( ( pipe == NRF24L01P_PIPE_P0 ) || ( pipe == NRF24L01P_PIPE_P1 ) ) {
 
         int setupAw = getRegister(_NRF24L01P_REG_SETUP_AW) & ~_NRF24L01P_SETUP_AW_AW_MASK;
-    
+
         switch ( width ) {
-    
+
             case 3:
                 setupAw |= _NRF24L01P_SETUP_AW_AW_3BYTE;
                 break;
-    
+
             case 4:
                 setupAw |= _NRF24L01P_SETUP_AW_AW_4BYTE;
                 break;
-    
+
             case 5:
                 setupAw |= _NRF24L01P_SETUP_AW_AW_5BYTE;
                 break;
-    
+
             default:
                 error( "nRF24L01P: Invalid setRxAddress width setting %d\r\n", width );
                 return;
-    
+
         }
-    
+
         setRegister(_NRF24L01P_REG_SETUP_AW, setupAw);
 
     } else {
-    
+
         width = 1;
-    
+
     }
 
     int rxAddrPxRegister = _NRF24L01P_REG_RX_ADDR_P0 + ( pipe - NRF24L01P_PIPE_P0 );
@@ -768,7 +779,7 @@ unsigned long long nRF24L01P::getRxAddress(int pipe) {
 
 }
 
-    
+
 unsigned long long nRF24L01P::getTxAddress(void) {
 
     int setupAw = getRegister(_NRF24L01P_REG_SETUP_AW) & _NRF24L01P_SETUP_AW_AW_MASK;
@@ -835,7 +846,7 @@ bool nRF24L01P::readable(int pipe) {
 
 
 int nRF24L01P::write(int pipe, char *data, int count) {
-	Serial pc(USBTX, USBRX); // tx, rx
+	// Serial pc(USBTX, USBRX); // tx, rx
     // Note: the pipe number is ignored in a Transmit / write
 
     //
@@ -845,40 +856,40 @@ int nRF24L01P::write(int pipe, char *data, int count) {
     disable();
 
     if ( count <= 0 ) return 0;
-	pc.printf("1\r\n");
+	// pc.printf("1\r\n");
     if ( count > _NRF24L01P_TX_FIFO_SIZE ) count = _NRF24L01P_TX_FIFO_SIZE;
-		pc.printf("2\r\n");
+		// pc.printf("2\r\n");
     // Clear the Status bit
     setRegister(_NRF24L01P_REG_STATUS, _NRF24L01P_STATUS_TX_DS);
-		pc.printf("3\r\n");
+		// pc.printf("3\r\n");
     nCS_ = 0;
 
     int status = spi_.write(_NRF24L01P_SPI_CMD_W_TX_PYLD_NO_ACK);
-		pc.printf("4\r\n");
-		pc.printf("%02x\r\n",status);
+		// pc.printf("4\r\n");
+		// pc.printf("%02x\r\n",status);
     for ( int i = 0; i < count; i++ ) {
 
         spi_.write(*data++);
 
     }
-	pc.printf("5\r\n");
-	pc.printf("%02x\r\n",status);
+	// pc.printf("5\r\n");
+	// pc.printf("%02x\r\n",status);
     nCS_ = 1;
 
     int originalMode = mode;
     setTransmitMode();
-	pc.printf("6\r\n");
+	// pc.printf("6\r\n");
     enable();
     wait_us(_NRF24L01P_TIMING_Thce_us);
     disable();
-	pc.printf("7\r\n");
+	// pc.printf("7\r\n");
 //	wait_us(100);
     while ( !( getStatusRegister() & _NRF24L01P_STATUS_TX_DS ) ) {
 //		pc.printf("%02x\r\n",getStatusRegister());
 //        // Wait for the transfer to complete
 //
     }
-	pc.printf("8\r\n");
+	// pc.printf("8\r\n");
     // Clear the Status bit
     setRegister(_NRF24L01P_REG_STATUS, _NRF24L01P_STATUS_TX_DS);
 
@@ -916,21 +927,21 @@ int nRF24L01P::read(int pipe, char *data, int count) {
         int status = spi_.write(_NRF24L01P_SPI_CMD_R_RX_PL_WID);
 
         int rxPayloadWidth = spi_.write(_NRF24L01P_SPI_CMD_NOP);
-        
+
         nCS_ = 1;
 
         if ( ( rxPayloadWidth < 0 ) || ( rxPayloadWidth > _NRF24L01P_RX_FIFO_SIZE ) ) {
-    
+
             // Received payload error: need to flush the FIFO
 
             nCS_ = 0;
-    
+
             int status = spi_.write(_NRF24L01P_SPI_CMD_FLUSH_RX);
-    
+
             int rxPayloadWidth = spi_.write(_NRF24L01P_SPI_CMD_NOP);
-            
+
             nCS_ = 1;
-            
+
             //
             // At this point, we should retry the reception,
             //  but for now we'll just fall through...
@@ -941,13 +952,13 @@ int nRF24L01P::read(int pipe, char *data, int count) {
             if ( rxPayloadWidth < count ) count = rxPayloadWidth;
 
             nCS_ = 0;
-        
+
             int status = spi_.write(_NRF24L01P_SPI_CMD_RD_RX_PAYLOAD);
-        
+
             for ( int i = 0; i < count; i++ ) {
-        
+
                 *data++ = spi_.write(_NRF24L01P_SPI_CMD_NOP);
-        
+
             }
 
             nCS_ = 1;
@@ -991,7 +1002,7 @@ void nRF24L01P::setRegister(int regAddress, int regData) {
 
     nCS_ = 0;
 
-    int status = spi_.write(cn);
+    spi_.write(cn);
 
     spi_.write(regData & 0xFF);
 
@@ -1009,7 +1020,7 @@ int nRF24L01P::getRegister(int regAddress) {
 
     nCS_ = 0;
 
-    int status = spi_.write(cn);
+    spi_.write(cn);
 
     int dn = spi_.write(_NRF24L01P_SPI_CMD_NOP);
 
@@ -1029,4 +1040,19 @@ int nRF24L01P::getStatusRegister(void) {
 
     return status;
 
+}
+
+int nRF24L01P::writeAcknowledgePayload(int pipe, uint8_t * package, uint8_t length){
+
+    nCS_ = 0;
+
+    int status = spi_.write(_NRF24L01P_SPI_CMD_W_ACK_PAYLOAD | (pipe & 0x07));
+
+    for (int i=0; i<length;i++){
+        spi_.write((*++package));
+    }
+
+    nCS_ = 1;
+
+    return status;
 }

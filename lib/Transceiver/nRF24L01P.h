@@ -2,7 +2,7 @@
  * @file nRF24L01P.h
  *
  * @author Owen Edwards
- * 
+ *
  * @section LICENSE
  *
  * Copyright (c) 2010 Owen Edwards
@@ -259,7 +259,7 @@ public:
      * @return the number of bytes actually written, or -1 for an error
      */
     int write(int pipe, char *data, int count);
-    
+
     /**
      * Receive data
      *
@@ -284,24 +284,24 @@ public:
      * Note: receive pipes are enabled when their address is set.
      */
     void disableAllRxPipes(void);
-    
+
     /**
      * Disable AutoAcknowledge function
      */
     void disableAutoAcknowledge(void);
-    
+
     /**
      * Enable AutoAcknowledge function
      *
      * @param pipe the receive pipe
      */
     void enableAutoAcknowledge(int pipe = NRF24L01P_PIPE_P0);
-    
+
     /**
      * Disable AutoRetransmit function
      */
     void disableAutoRetransmit(void);
-    
+
     /**
      * Enable AutoRetransmit function
      *
@@ -312,7 +312,7 @@ public:
 
 
     int getStatusRegister(void);
-    
+
     /**
      * Get the contents of an addressable register.
      *
@@ -320,10 +320,12 @@ public:
      * @return the contents of the register
      */
     int getRegister(int regAddress);
-    
+
+    int writeAcknowledgePayload(int pipe, uint8_t * package, uint8_t length);
+
 private:
 
-    
+
 
     /**
      * Set the contents of an addressable register.
@@ -338,7 +340,7 @@ private:
      *
      * @return the contents of the status register
      */
-    
+
 
     SPI         spi_;
     DigitalOut  nCS_;

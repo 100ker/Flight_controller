@@ -3,7 +3,7 @@
 
 #include <mbed.h>
 
-class HMC5883L{    
+class HMC5883L{
     private:
     // address and register address values
         static const int HMC5883L_ADDRESS = (0x1E<<1);
@@ -22,15 +22,15 @@ class HMC5883L{
         static const int CONFIG_B_DEFAULT = 0x20; // +-1.3 Ga, corresponds with 1090 LSb/Gauss
         static const int MODE_DEFAULT = 0x01; // single measurement mode
         static const int MODE_CONTINUOUS = 0x00; // continuous measurement mode
-        
+
     // error registry value
         static const int MEASUREMENT_OVERFLOW = -4096; // this value is in data registers if ADC overflow occurs
-                
+
         char buffer[6];
         float x, y, z;
-        
+
         I2C i2c;
-        
+
     public:
         int initialize();
             HMC5883L(): i2c(p28,p27){}

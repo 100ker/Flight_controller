@@ -12,8 +12,8 @@ class ITG3200{
         static const int  REG_DATA_X = 0x1D;
         static const int  REG_DATA_Y = 0x1F;
         static const int  REG_DATA_Z = 0x21;
-    
-    
+
+
         static const int  SAMPLE_RATE_8KHZ_256 = 0x00;
         static const int  SAMPLE_RATE_1KHZ_188 = 0x01;
         static const int  SAMPLE_RATE_1KHZ_98 = 0x02;
@@ -24,14 +24,14 @@ class ITG3200{
 
         static const int  FS_OFFSET = 0x03;
         static const int  FS_SELECT = 0x03;
-        
+
         static const float scaleFactor = 14.375;
-        
+
         char buffer[8];
         float x,y,z;
-        
+
         I2C i2c;
-        
+
     public:
         int initialize();
             ITG3200(): i2c(p28,p27){}
