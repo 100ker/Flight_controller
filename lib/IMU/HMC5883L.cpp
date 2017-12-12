@@ -1,25 +1,25 @@
 #include "HMC5883L.h"
 
 int HMC5883L::initialize(){
-    this->i2c.frequency(400000);
+    i2c.frequency(400000);
 
     // set config registry A
-    this->buffer[0] = this->REG_CONFIG_A;
-    this->buffer[1] = this->CONFIG_A_15_8;
+    buffer[0] = REG_CONFIG_A;
+    buffer[1] = CONFIG_A_15_8;
 
-    this->i2c.write(this->HMC5883L_ADDRESS,this->buffer,2);
+    i2c.write(HMC5883L_ADDRESS,buffer,2);
 
     // set config registry B
-    this->buffer[0] = this->REG_CONFIG_B;
-    this->buffer[1] = this->CONFIG_B_DEFAULT;
+    buffer[0] = REG_CONFIG_B;
+    buffer[1] = CONFIG_B_DEFAULT;
 
-    this->i2c.write(this->HMC5883L_ADDRESS,this->buffer,2);
+    i2c.write(HMC5883L_ADDRESS,buffer,2);
 
     // set mode registry
-    this->buffer[0] = this->REG_MODE;
-    this->buffer[1] = this->MODE_CONTINUOUS;
+    buffer[0] = REG_MODE;
+    buffer[1] = MODE_CONTINUOUS;
 
-    this->i2c.write(this->HMC5883L_ADDRESS,this->buffer,2);
+    i2c.write(HMC5883L_ADDRESS,buffer,2);
 
     // check if device is ready
     // TODO
@@ -31,16 +31,16 @@ int HMC5883L::initialize(){
 
 int HMC5883L::read(float * x, float * y, float * z){
     // write register address to device
-    this->buffer[0] = this->REG_DATA_X;
-    this->i2c.write(this->HMC5883L_ADDRESS,this->buffer,1,true);
+    buffer[0] = REG_DATA_X;
+    i2c.write(HMC5883L_ADDRESS,buffer,1,true);
 
     // request read from device
-    this->i2c.read(this->HMC5883L_ADDRESS,this->buffer,6);
+    i2c.read(HMC5883L_ADDRESS,buffer,6);
 
     // calculate data from raw readings
-    *x = (float)(int16_t)((this->buffer[0]<<8) + this->buffer[1])*0.92;
-    *y = (float)(int16_t)((this->buffer[2]<<8) + this->buffer[3])*0.92;
-    *z = (float)(int16_t)((this->buffer[4]<<8) + this->buffer[5])*0.92;
+    *x = (float)(int16_t)((buffer[0]<<8) + buffer[1])*0.92;
+    *y = (float)(int16_t)((buffer[2]<<8) + buffer[3])*0.92;
+    *z = (float)(int16_t)((buffer[4]<<8) + buffer[5])*0.92;
 
     //*x = atan2(*y,*x)/3.14159265359*180;
 

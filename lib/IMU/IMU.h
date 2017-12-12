@@ -11,6 +11,7 @@ class IMU{
         ITG3200 itg3200;
         ADXL345 adxl345;
         HMC5883L hmc5883l;
+        dataStruct * dataPtr;
 
         float accelerations[3], velocities[3], heading[3], rotationMatrix[3][3];
         float temp;
@@ -20,9 +21,9 @@ class IMU{
         void getReadings(void);
         void calculateQuaternions(void);
     public:
-        int initialize(void);
+        int initialize(dataStruct * data);
         void calibrate(void);
-        void update(dataStruct * data);
+        void update(void);
         void estimator(float * roll, float * pitch);
 
 };

@@ -547,7 +547,7 @@ void nRF24L01P::enableAutoAcknowledge(int pipe) {
 
     int dynp = getRegister(_NRF24L01P_REG_DYNPD);
 
-    dynp |= (1 << pipe - NRF24L01P_PIPE_P0);
+    dynp |= (1 << (pipe - NRF24L01P_PIPE_P0));
 
     setRegister(_NRF24L01P_REG_DYNPD, dynp);
 

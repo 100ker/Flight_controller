@@ -3,30 +3,30 @@
 
 #include <stdint.h>
 
-struct controllerStruct{
+struct remoteStruct{
     uint16_t throttle;
-    uint16_t roll;
-    uint16_t pitch;
-    uint16_t yaw;
+    int16_t roll;
+    int16_t pitch;
+    int16_t yaw;
 
-    controllerStruct() : throttle(0),
-                         roll(0),
-                         pitch(0),
-                         yaw(0)
-                         {}
+    remoteStruct() : throttle(0),
+                     roll(0),
+                     pitch(0),
+                     yaw(0)
+                     {}
 };
 
 struct imuStruct {
-    uint16_t roll;
-    uint16_t pitch;
-    uint16_t yaw;
+    int16_t roll;
+    int16_t pitch;
+    int16_t yaw;
     int16_t rollVelocity;
     int16_t pitchVelocity;
     int16_t yawVelocity;
 };
 
 struct dataStruct{
-    controllerStruct controller;
+    remoteStruct remote;
     imuStruct imu;
     uint16_t batteryLevel;
     bool acroMode;
@@ -36,22 +36,50 @@ struct dataStruct{
                     armMotor(false)
                     {
                     }
-    } ;
+} ;
 
-struct configStruct{
+struct radioConfigStruct{
     uint8_t channel;
     uint64_t txAddress;
     uint64_t rxAddress;
     uint8_t transferSize;
+
+    radioConfigStruct() : channel(101),
+                          txAddress(0x00F0F0F0F0),
+                          rxAddress(0x00F0F0F0F0),
+                          transferSize(8)
+                          {
+                          }
+
+};
+
+struct acroModeStruct{
+    float Kp[4][3], Ki[4][3], Kd[4][3];
+};
+
+struct stabilizingModeStruct{
+    float Kp[4][3], Ki[4][3], Kd[4][3];
+};
+
+struct controllerConfigStruct{
+    acroModeStruct acroModeConfig;
+    stabilizingModeStruct stabilizingModeConfig;
+    int8_t signs[4][3];
+
+    controllerConfigStruct() : signs({{1, 1, 1},{-1,1,-1},{1,-1,-1},{-1,-1,1}})
+                               {}
+};
+    
+
+
+struct configStruct{
+    radioConfigStruct radioConfig;
+    controllerConfigStruct controllerConfig;
     float tickerPeriod;
 
-    configStruct() :    channel(101),
-                        txAddress(0x00F0F0F0F0),
-                        rxAddress(0x00F0F0F0F0),
-                        transferSize(8),
-                        tickerPeriod(1.0/500.0)
-                        {
-                        }
-
-    };
+    configStruct() : tickerPeriod(1.0/500.0)
+                    {
+                    }
+};
+    
 #endif

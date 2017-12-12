@@ -3,7 +3,7 @@
 #include <iostream>
 #include <bitset>
 
-uint8_t Transceiver::initialize(uint8_t channel, unsigned long long txAddress, unsigned long long rxAddress, uint8_t transferSize){
+uint8_t Transceiver::initialize(configStruct config, dataStruct * data){
     radio.powerUp();
 
     // Check is status register is correct, if not, a full reboot is needed :(
@@ -12,18 +12,19 @@ uint8_t Transceiver::initialize(uint8_t channel, unsigned long long txAddress, u
         std::cout << bitset<8>(statRegister) << std::endl;
         return 1;
       }
-    radio.setRfFrequency (2400 + channel);
-    radio.setTransferSize(transferSize);
+    radio.setRfFrequency (2400 + config.radioConfig.channel);
+    radio.setTransferSize(config.radioConfig.transferSize);
     radio.setCrcWidth(16);
     radio.enableAutoAcknowledge(NRF24L01P_PIPE_P0);
-    radio.setRxAddress(rxAddress);
-    radio.setTxAddress(txAddress);
+    radio.setRxAddress(config.radioConfig.rxAddress);
+    radio.setTxAddress(config.radioConfig.txAddress);
     radio.setReceiveMode();
     
     radio.enable();
 
-    this->transferSize = transferSize;
+    transferSize = config.radioConfig.transferSize;
     rxData = new char[transferSize];
+    dataPtr = data;
     return 0;
     }
 
@@ -55,19 +56,19 @@ void Transceiver::receive(int pipe,char* buffer,uint8_t length){
         radio.read( pipe, buffer, length );
     }
 
-void Transceiver::update(dataStruct * data){
+void Transceiver::update(void){
     receive(NRF24L01P_PIPE_P0, rxData, transferSize);
-    (*data).controller.throttle = (uint16_t)rxData[1] << 8 |rxData[0];
-    (*data).controller.roll = (uint16_t)rxData[3] << 8 |rxData[2];
-    (*data).controller.pitch = (uint16_t)rxData[5] << 8 |rxData[4];
-    (*data).controller.yaw = (uint16_t)rxData[7] << 8 |rxData[6];
-    (*data).acroMode = ((bool)rxData[8] >> 1) & 0x01;
-    (*data).armMotor = (bool)rxData[8] & 0x01;
+    (*dataPtr).remote.throttle = (uint16_t)rxData[1] << 8 |rxData[0];
+    (*dataPtr).remote.roll = (int16_t)rxData[3] << 8 |rxData[2];
+    (*dataPtr).remote.pitch = (int16_t)rxData[5] << 8 |rxData[4];
+    (*dataPtr).remote.yaw = (int16_t)rxData[7] << 8 |rxData[6];
+    (*dataPtr).acroMode = ((bool)rxData[8] >> 1) & 0x01;
+    (*dataPtr).armMotor = (bool)rxData[8] & 0x01;
     }
 
-void Transceiver::setAcknowledgePayload(int pipe, dataStruct * data){
+void Transceiver::setAcknowledgePayload(int pipe){
         uint8_t package[4];
-        package[0] = (*data).batteryLevel & 0xFF;
-        package[1] = (*data).batteryLevel >> 8;
+        package[0] = (*dataPtr).batteryLevel & 0xFF;
+        package[1] = (*dataPtr).batteryLevel >> 8;
         radio.writeAcknowledgePayload(pipe, &package[0], 2);
     }

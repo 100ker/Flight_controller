@@ -7,15 +7,16 @@
 
 class Controller{
     private:
-        ESCController escController1;
-        ESCController escController2;
-        ESCController escController3;
-        ESCController escController4;
+        ESCController escController[4];
+        dataStruct * dataPtr;
+        controllerConfigStruct * controllerConfigPtr;
+        uint8_t setpoint[4];
 
     public:
-        Controller(PinName pin1, PinName pin2, PinName pin3, PinName pin4): escController1(pin1), escController2(pin2), escController3(pin3), escController4(pin4){}; // delegation of constructors
-        void initialize(void);
-        void update(dataStruct * data);
+        Controller(PinName pin1, PinName pin2, PinName pin3, PinName pin4): 
+        escController{ESCController(pin1), ESCController(pin2), ESCController(pin3), ESCController(pin4)} {}; // delegation of constructors
+        void initialize(dataStruct * data, controllerConfigStruct * controllerConfig);
+        void update(void);
 };
 
 #endif

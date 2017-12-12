@@ -1,8 +1,8 @@
 #include "mbed.h"
-#include "controller.h"
+#include "config.h"
 #include "transceiver.h"
 #include "IMU.h"
-#include "config.h"
+#include "controller.h"
 #include <iostream>
 #include <bitset>
 
@@ -18,40 +18,41 @@ IMU imu;
 uint8_t status;
 
 void tick(void){
-    radio.update(&data);
-    controller.update(&data);
+    radio.update();
+    imu.update();
+    controller.update();
     data.batteryLevel = battery.read_u16();
-    radio.setAcknowledgePayload(0,&data);
+    radio.setAcknowledgePayload(0);
 }
 
 int main() {
     // wait(5);
     led=0;
-    status = radio.initialize(config.channel,config.rxAddress, config.txAddress,config.transferSize);
+    status = radio.initialize(config, &data);
     if (status) {
         led2 = 1;
         return 0;
     }
 
-    imu.initialize();
+    imu.initialize(&data);
 
     led=1;
 
-    while (!data.controller.throttle){
-        radio.update(&data);
-        std::cout << (int)data.controller.throttle << std::endl;
+    while (!data.remote.throttle){
+        radio.update();
+        std::cout << (int)data.remote.throttle << std::endl;
     }
 
     led2=1;
 
-    while (data.controller.throttle < 1000){
-        radio.update(&data);
-        std::cout << (int)data.controller.throttle << std::endl;
+    while (data.remote.throttle < 1000){
+        radio.update();
+        std::cout << (int)data.remote.throttle << std::endl;
     }
     led2=0;
     led3=1;
 
-    controller.initialize();
+    controller.initialize(&data, &config.controllerConfig);
 
     ticker.attach(&tick,config.tickerPeriod);
 }

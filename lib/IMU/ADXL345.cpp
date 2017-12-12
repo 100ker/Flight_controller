@@ -1,43 +1,43 @@
 #include "ADXL345.h"
 
 int ADXL345::initialize(uint16_t gRange, float xFilter, float yFilter, float zFilter){
-    this->alphaX = xFilter;
-    this->alphaY = yFilter;
-    this->alphaZ = zFilter;
-    this->Fx = 0.0;
-    this->Fy = 0.0;
-    this->Fz = 0.0;
+    alphaX = xFilter;
+    alphaY = yFilter;
+    alphaZ = zFilter;
+    Fx = 0.0;
+    Fy = 0.0;
+    Fz = 0.0;
 
 
-    this->gRange = 2*gRange;
+    gRange = 2*gRange;
 
-    this->i2c.frequency(400000);
+    i2c.frequency(400000);
 
-    this->buffer[0] = this->REG_DATA_FORMAT;
-    this->buffer[1] = this->convertGRange(gRange);
+    buffer[0] = REG_DATA_FORMAT;
+    buffer[1] = convertGRange(gRange);
 
-    int status = this->i2c.write(this->ADXL345_ADDRESS,this->buffer,2);
+    int status = i2c.write(ADXL345_ADDRESS,buffer,2);
     if (status != 0){
-//        pc.printf("%02x%02x\r\n",this->buffer[0],this->buffer[1]);
+//        pc.printf("%02x%02x\r\n",buffer[0],buffer[1]);
         return 1;
     }
 
-    this->buffer[0] = this->REG_BW_RATE;
-    this->buffer[1] = this->CMD_DATA_RATE_200HZ;
-    status = this->i2c.write(this->ADXL345_ADDRESS,this->buffer,2);
+    buffer[0] = REG_BW_RATE;
+    buffer[1] = CMD_DATA_RATE_200HZ;
+    status = i2c.write(ADXL345_ADDRESS,buffer,2);
     if (status != 0){
         return 2;
     }
 
-    this->buffer[0] = this->REG_POWER_CTRL;
-    this->buffer[1] = this->CMD_MEASUREMENT_MODE;
+    buffer[0] = REG_POWER_CTRL;
+    buffer[1] = CMD_MEASUREMENT_MODE;
 
-    status = this->i2c.write(this->ADXL345_ADDRESS,this->buffer,2);
+    status = i2c.write(ADXL345_ADDRESS,buffer,2);
     if (status != 0){
         return 3;
     }
 
-//    status = this->selfTest();
+//    status = selfTest();
 //    if (status != 0){
 //        return status;
 //    }
@@ -66,23 +66,23 @@ uint8_t ADXL345::convertGRange(uint16_t gRange){
 }
 
 int ADXL345::selfTest(void){
-    // this->buffer[0] = this->REG_DATA_FORMAT;
-    // this->buffer[1] = this->CMD_DATA_FORMAT_FULL_RES_16G;
+    // buffer[0] = REG_DATA_FORMAT;
+    // buffer[1] = CMD_DATA_FORMAT_FULL_RES_16G;
 
-    // int status = this->i2c.write(this->ADXL345_ADDRESS,this->buffer,2);
+    // int status = i2c.write(ADXL345_ADDRESS,buffer,2);
     // if (status != 0){
     //     return 4;
     // }
 
     // char bufferOff[20][6];
     // for (int i=0;i<20;i++){
-    //     this->i2c.read(this->ADXL345_ADDRESS,bufferOff[i],6);
+    //     i2c.read(ADXL345_ADDRESS,bufferOff[i],6);
     // }
 
-    // this->buffer[0] = this->REG_DATA_FORMAT;
-    // this->buffer[1] = this->CMD_DATA_FORMAT_FULL_RES_16G + CMD_SELF_TEST;
+    // buffer[0] = REG_DATA_FORMAT;
+    // buffer[1] = CMD_DATA_FORMAT_FULL_RES_16G + CMD_SELF_TEST;
 
-    // status = this->i2c.write(this->ADXL345_ADDRESS,this->buffer,2);
+    // status = i2c.write(ADXL345_ADDRESS,buffer,2);
     // if (status != 0){
     //     return 5;
     // }
@@ -91,7 +91,7 @@ int ADXL345::selfTest(void){
 
     // char bufferOn[20][6];
     // for (int i=0;i<20;i++){
-    //     this->i2c.read(this->ADXL345_ADDRESS,bufferOn[i],6);
+    //     i2c.read(ADXL345_ADDRESS,bufferOn[i],6);
     // }
 
     // float totalOff[3];
@@ -130,10 +130,10 @@ int ADXL345::selfTest(void){
     //     return 8;
     // }
 
-    // this->buffer[0] = this->REG_DATA_FORMAT;
-    // this->buffer[1] = this->CMD_DATA_FORMAT_FULL_RES_16G;
+    // buffer[0] = REG_DATA_FORMAT;
+    // buffer[1] = CMD_DATA_FORMAT_FULL_RES_16G;
 
-    // status = this->i2c.write(this->ADXL345_ADDRESS,this->buffer,2);
+    // status = i2c.write(ADXL345_ADDRESS,buffer,2);
     // if (status != 0){
     //     return 9;
     // }
@@ -143,38 +143,38 @@ int ADXL345::selfTest(void){
 
 int ADXL345::read(float * fx, float * fy, float * fz){
     // write register address to device
-    this->buffer[0] = this->REG_DATA_X;
-    this->i2c.write(this->ADXL345_ADDRESS,buffer,1,true);
+    buffer[0] = REG_DATA_X;
+    i2c.write(ADXL345_ADDRESS,buffer,1,true);
 
 //    Serial pc(USBTX, USBRX); // tx, rx
 
     // request data from device
-    this->i2c.read(this->ADXL345_ADDRESS,buffer,6);
-//    pc.printf("%02x%02x%02x%02x\r\n",this->buffer[0],this->buffer[1],this->buffer[2],this->buffer[3]);
+    i2c.read(ADXL345_ADDRESS,buffer,6);
+//    pc.printf("%02x%02x%02x%02x\r\n",buffer[0],buffer[1],buffer[2],buffer[3]);
     // calculate data from raw readings
-    this->x = ((float)((int16_t)(buffer[1]<<8)+buffer[0]))*this->gRange/(1024.0);
-    this->y = ((float)((int16_t)(buffer[3]<<8)+buffer[2]))*this->gRange/(1024.0);
-    this->z = ((float)((int16_t)(buffer[5]<<8)+buffer[4]))*this->gRange/(1024.0);
+    x = ((float)((int16_t)(buffer[1]<<8)+buffer[0]))*gRange/(1024.0);
+    y = ((float)((int16_t)(buffer[3]<<8)+buffer[2]))*gRange/(1024.0);
+    z = ((float)((int16_t)(buffer[5]<<8)+buffer[4]))*gRange/(1024.0);
 
     // filter data
-    *fx = x * this->alphaX + this->Fx * (1.0-this->alphaX);
-    *fy = y * this->alphaY + this->Fy * (1.0-this->alphaY);
-    *fz = z * this->alphaZ + this->Fz * (1.0-this->alphaZ);
+    *fx = x * alphaX + Fx * (1.0-alphaX);
+    *fy = y * alphaY + Fy * (1.0-alphaY);
+    *fz = z * alphaZ + Fz * (1.0-alphaZ);
 
     // store filtered data for next calculation
-    this->Fx = *fx;
-    this->Fy = *fy;
-    this->Fz = *fz;
+    Fx = *fx;
+    Fy = *fy;
+    Fz = *fz;
 
     return 0;
 }
 
 int ADXL345::whoAmI(void){
-    this->buffer[0] = 0x00;
-//    this->buffer[1] = this->convertGRange(gRange);
+    buffer[0] = 0x00;
+//    buffer[1] = convertGRange(gRange);
 
-    int status = this->i2c.write(this->ADXL345_ADDRESS,this->buffer,1,true);
-    this->i2c.read(this->ADXL345_ADDRESS,this->buffer,1);
+    i2c.write(ADXL345_ADDRESS,buffer,1,true);
+    i2c.read(ADXL345_ADDRESS,buffer,1);
     return buffer[0];
 
 }
