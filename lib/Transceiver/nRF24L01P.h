@@ -321,12 +321,6 @@ public:
      */
     int getRegister(int regAddress);
 
-    int writeAcknowledgePayload(int pipe, uint8_t * package, uint8_t length);
-
-private:
-
-
-
     /**
      * Set the contents of an addressable register.
      *
@@ -335,13 +329,9 @@ private:
      */
     void setRegister(int regAddress, int regData);
 
-    /**
-     * Get the contents of the status register.
-     *
-     * @return the contents of the status register
-     */
+    int writeAcknowledgePayload(int pipe, uint8_t * package, uint8_t length);
 
-
+private:
     SPI         spi_;
     DigitalOut  nCS_;
     DigitalOut  ce_;

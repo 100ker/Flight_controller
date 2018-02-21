@@ -1,4 +1,5 @@
 #include "IMU.h"
+#include <iostream>
 
 /*
 Initializes the devices on the IMU. Returns an error code if an error occurs.
@@ -11,10 +12,10 @@ Finally, the magnetometer is initialized.
 @return         status. 0 if success, error code otherwise
 
 */
-int IMU::initialize(dataStruct * data){
+int IMU::initialize(configStruct config, dataStruct * data){
     int status;
     // Initialize the GYRO.
-    status = itg3200.initialize();
+    status = itg3200.initialize(config.imuconfig.itg3200);
     if (status)
         return status;
 
@@ -143,10 +144,9 @@ void IMU::calculateQuaternions(void){
 }
 
 /*
-Updates the dataPtr. The function takes pointers to floats and updates the values
-there.
+Updates the dataPtr. 
 It starts with updating the raw values. Then calculates the quaternions from
-that dataPtr and finally calculates Euler angles from the quaterions.
+that data and finally calculates Euler angles from the quaterions.
 Still has to be seen if we need Euler angles or if we can control using
 quaternions.
 
@@ -158,36 +158,33 @@ void IMU::update(void){
     // Get raw values from devices.
     getReadings();
 
-    if (!(*dataPtr).acroMode){
-        // Calculate quaternions from the raw values.
-        calculateQuaternions();
-
-        // Calculate Euler angles from quaternions.
-        (*dataPtr).imu.roll = atan2(2*(qw*qx+qy*qz),1-2*(qx*qx+qy*qy))/3.14159265359*180;
-        (*dataPtr).imu.pitch = asin(2*(qw*qy-qz*qx))/3.14159265359*180;
-        (*dataPtr).imu.yaw = atan2(2*(qw*qz+qx*qy),1-2*(qy*qy+qz*qz))/3.14159265359*180;
+    if ((*dataPtr).acroMode){
+        (*dataPtr).imu.rollVelocity = velocities[0];
+        (*dataPtr).imu.pitchVelocity = -velocities[1];
+        (*dataPtr).imu.yawVelocity = velocities[2];
     }
     else {
-        (*dataPtr).imu.rollVelocity = velocities[0];
-        (*dataPtr).imu.pitchVelocity = velocities[1];
-        (*dataPtr).imu.yawVelocity = velocities[2];
+        estimator(&(*dataPtr).imu.roll, &(*dataPtr).imu.pitch);
+        (*dataPtr).imu.yawVelocity = -velocities[2];
+        // // Calculate quaternions from the raw values.
+        // calculateQuaternions();
+
+        // // Calculate Euler angles from quaternions.
+        // (*dataPtr).imu.roll = atan2(2*(qw*qx+qy*qz),1-2*(qx*qx+qy*qy))/3.14159265359*180;
+        // (*dataPtr).imu.roll = asin(2*(qw*qy-qz*qx))/3.14159265359*180;
+        // (*dataPtr).imu.yaw = atan2(2*(qw*qz+qx*qy),1-2*(qy*qy+qz*qz))/3.14159265359*180;
     }
 }
 
 void IMU::estimator(float * roll, float * pitch){
-    getReadings();
-//    Serial pc(USBTX, USBRX); // tx, rx
-    k = 1;
-    float angle = -atan2(accelerations[1],accelerations[2])*180/3.1417;
-    float error = estimated_roll - angle;
-    estimated_roll += (-velocities[0] - error*k)*0.05;
-    *roll = estimated_roll;
+    float dt = 0.01;
+    *roll -= ((float)velocities[0])*dt;
+    *pitch += ((float)velocities[1])*dt;
 
+    //float forceMagnitudeApprox = abs(accelerations[0]) + abs(accelerations[1]) + abs(accelerations[2]);
 
-    angle = -atan2(accelerations[0],accelerations[2])*180/3.1417;
-    error = estimated_pitch - angle;
-    estimated_pitch += (-velocities[1] - error*k*4)*0.05;
-    *pitch = estimated_pitch;
-
-//    pc.printf("%.4f\t%.4f\r\n",estimated_roll,estimated_pitch);
+    float rollAcc = -atan2f(accelerations[1],accelerations[2])*180 / M_PI;
+    *roll = *roll * 0.95 + rollAcc * 0.05;
+    float pitchAcc = -atan2f(accelerations[0],accelerations[2])*180 / M_PI;
+    *pitch = *pitch * 0.95 + pitchAcc * 0.05;
 }

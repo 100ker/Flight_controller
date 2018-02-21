@@ -26,10 +26,10 @@ class ADXL345{
 
         I2C i2c;
 
-        uint8_t convertGRange(uint16_t gRange);
+        uint8_t convertGRange();
 
     public:
-        int initialize(uint16_t gRange, float xFilter, float yFilter, float zFilter);
+        int initialize(uint16_t gRangeInput, float xFilter, float yFilter, float zFilter);
             ADXL345(): i2c(p28,p27){}
         int read(float * fx, float * fy, float * fz);
         int selfTest(void);

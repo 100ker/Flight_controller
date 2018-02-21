@@ -2,6 +2,7 @@
 #define ITG3200_H
 
 #include "mbed.h"
+#include "config.hpp"
 
 class ITG3200{
     private:
@@ -29,11 +30,12 @@ class ITG3200{
 
         char buffer[8];
         float x,y,z;
+        float a, b, c;
 
         I2C i2c;
 
     public:
-        int initialize();
+        int initialize(ITG3200ConfigStruct config);
             ITG3200(): i2c(p28,p27){}
         int read(float * temp, float * fx, float * fy, float * fz);
 };

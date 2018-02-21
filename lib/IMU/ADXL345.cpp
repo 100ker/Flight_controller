@@ -1,6 +1,7 @@
 #include "ADXL345.h"
+#include <iostream>
 
-int ADXL345::initialize(uint16_t gRange, float xFilter, float yFilter, float zFilter){
+int ADXL345::initialize(uint16_t gRangeInput, float xFilter, float yFilter, float zFilter){
     alphaX = xFilter;
     alphaY = yFilter;
     alphaZ = zFilter;
@@ -8,13 +9,10 @@ int ADXL345::initialize(uint16_t gRange, float xFilter, float yFilter, float zFi
     Fy = 0.0;
     Fz = 0.0;
 
-
-    gRange = 2*gRange;
-
     i2c.frequency(400000);
-
+    gRange = gRangeInput;
     buffer[0] = REG_DATA_FORMAT;
-    buffer[1] = convertGRange(gRange);
+    buffer[1] = convertGRange();
 
     int status = i2c.write(ADXL345_ADDRESS,buffer,2);
     if (status != 0){
@@ -45,7 +43,7 @@ int ADXL345::initialize(uint16_t gRange, float xFilter, float yFilter, float zFi
     return 0;
 }
 
-uint8_t ADXL345::convertGRange(uint16_t gRange){
+uint8_t ADXL345::convertGRange(){
     uint8_t value = 0x00;
     switch (gRange) {
         case 2:
@@ -152,10 +150,10 @@ int ADXL345::read(float * fx, float * fy, float * fz){
     i2c.read(ADXL345_ADDRESS,buffer,6);
 //    pc.printf("%02x%02x%02x%02x\r\n",buffer[0],buffer[1],buffer[2],buffer[3]);
     // calculate data from raw readings
-    x = ((float)((int16_t)(buffer[1]<<8)+buffer[0]))*gRange/(1024.0);
-    y = ((float)((int16_t)(buffer[3]<<8)+buffer[2]))*gRange/(1024.0);
-    z = ((float)((int16_t)(buffer[5]<<8)+buffer[4]))*gRange/(1024.0);
-
+    x = ((float)((int16_t)(buffer[1]<<8)+buffer[0]))*gRange/(1023.0);
+    y = ((float)((int16_t)(buffer[3]<<8)+buffer[2]))*gRange/(1023.0);
+    z = ((float)((int16_t)(buffer[5]<<8)+buffer[4]))*gRange/(1023.0);
+    
     // filter data
     *fx = x * alphaX + Fx * (1.0-alphaX);
     *fy = y * alphaY + Fy * (1.0-alphaY);
