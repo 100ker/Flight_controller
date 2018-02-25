@@ -17,6 +17,7 @@ Ticker ticker;
 Controller controller(p24, p22, p21, p23);
 IMU imu;
 
+
 uint8_t status;
 
 void rxInterrupt(void){
@@ -95,6 +96,9 @@ void loadConfig(void){
 void flight(void)
 {   
     radio.update();
+    //serialConnection.printf("Roll: %d \t", (int)data.imu.roll);
+    //serialConnection.printf("Pitch: %d \t", (int)data.imu.pitch);
+    //serialConnection.printf("Yaw: %d \n", (int)data.imu.yaw);
     imu.update();
     controller.update();
     data.batteryLevel = battery.read_u16();
@@ -174,7 +178,7 @@ void initialize(void)
 
     led = 1;
 
-    //status = imu.initialize(config, &data);
+    status = imu.initialize(config, &data);
     if (status)
     {
         led = 1;
