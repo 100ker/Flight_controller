@@ -2,6 +2,8 @@
 #include <mbed.h>
 #include <iostream>
 #include <bitset>
+#include "../../src/main.h"
+
 
 uint8_t Transceiver::initialize(configStruct config, dataStruct *data)
 {
@@ -47,8 +49,11 @@ bool Transceiver::messageAvailable()
 
 void Transceiver::receive(int pipe, char *buffer, uint8_t length)
 {
-    if (_radio.readable())
+    if (_radio.readable()){
         _radio.read(pipe, buffer, length);
+        serialConnection.printf("boem\n");
+    }
+    else serialConnection.printf("biem\n");
 }
 
 void Transceiver::update(void)

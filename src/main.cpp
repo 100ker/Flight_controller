@@ -1,4 +1,5 @@
 #include <mbed.h>
+#include "main.h"
 #include <config.hpp>
 #include "iniparser.h"
 #include "transceiver.h"
@@ -7,7 +8,6 @@
 #include <iostream>
 #include <bitset>
 
-RawSerial serialConnection(USBTX,USBRX);
 DigitalOut led(LED1), led2(LED2), led3(LED3), led4(LED4);
 AnalogIn battery(p20);
 dataStruct data;
@@ -16,7 +16,7 @@ Transceiver radio(p5, p6, p7, p9, p14, p10);
 Ticker ticker;
 Controller controller(p24, p22, p21, p23);
 IMU imu;
-
+RawSerial serialConnection = RawSerial(USBTX,USBRX);
 
 uint8_t status;
 
@@ -99,7 +99,7 @@ void flight(void)
     //serialConnection.printf("Roll: %d \t", (int)data.imu.roll);
     //serialConnection.printf("Pitch: %d \t", (int)data.imu.pitch);
     //serialConnection.printf("Yaw: %d \n", (int)data.imu.yaw);
-    imu.update();
+    //imu.update();
     controller.update();
     data.batteryLevel = battery.read_u16();
     radio.setAcknowledgePayload(0);
@@ -134,6 +134,10 @@ void checkThrottleLow(void)
 void checkThrottleHigh(void)
 {
     radio.update();
+    serialConnection.printf("Throttle: %d \t", (int)data.remote.throttle);
+    serialConnection.printf("Roll: %d \t", (int)data.remote.roll);
+    serialConnection.printf("Pitch: %d \t", (int)data.remote.pitch);
+    serialConnection.printf("Yaw: %d \n", (int)data.remote.yaw);    
     radio.setAcknowledgePayload(0);
     if (data.remote.missedPackets > 200)
     {
@@ -178,7 +182,7 @@ void initialize(void)
 
     led = 1;
 
-    status = imu.initialize(config, &data);
+    //status = imu.initialize(config, &data);
     if (status)
     {
         led = 1;

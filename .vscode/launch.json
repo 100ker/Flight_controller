@@ -12,8 +12,9 @@
             "type": "platformio-debug",
             "request": "launch",
             "name": "PlatformIO Debugger",
-            "executable": "c:/Users/Tim/Documents/Flight_controller/.pioenvs/lpc1768/firmware.elf",
-            "toolchainBinDir": "C:/Users/Tim/.platformio/packages/toolchain-gccarmnoneeabi/bin",
+            "executable": "d:/Documents/Flight_controller/.pioenvs/lpc1768/firmware.elf",
+            "toolchainBinDir": "C:/Users/Tim/AppData/Roaming/SPB_16.6/.platformio/packages/toolchain-gccarmnoneeabi/bin",
+            "svdPath": "C:/Users/Tim/AppData/Roaming/SPB_16.6/.platformio/platforms/nxplpc/misc/svd/LPC176x5x_v0.2.svd",
             "preLaunchTask": "PlatformIO: Pre-Debug",
             "internalConsoleOptions": "openOnSessionStart"
         },
@@ -21,8 +22,9 @@
             "type": "platformio-debug",
             "request": "launch",
             "name": "PlatformIO Debugger (Skip Pre-Debug)",
-            "executable": "c:/Users/Tim/Documents/Flight_controller/.pioenvs/lpc1768/firmware.elf",
-            "toolchainBinDir": "C:/Users/Tim/.platformio/packages/toolchain-gccarmnoneeabi/bin",
+            "executable": "d:/Documents/Flight_controller/.pioenvs/lpc1768/firmware.elf",
+            "toolchainBinDir": "C:/Users/Tim/AppData/Roaming/SPB_16.6/.platformio/packages/toolchain-gccarmnoneeabi/bin",
+            "svdPath": "C:/Users/Tim/AppData/Roaming/SPB_16.6/.platformio/platforms/nxplpc/misc/svd/LPC176x5x_v0.2.svd",
             "internalConsoleOptions": "openOnSessionStart"
         }
     ]
