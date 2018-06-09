@@ -26,6 +26,7 @@ uint8_t Transceiver::initialize(configStruct config, dataStruct *data)
     _radio.enableAutoAcknowledge(NRF24L01P_PIPE_P0);
     _radio.setRxAddress(config.radioConfig.rxAddress);
     _radio.setTxAddress(config.radioConfig.txAddress);
+    _radio.setAirDataRate(NRF24L01P_DATARATE_250_KBPS);
     _radio.setReceiveMode();
 
     _radio.enable();
@@ -51,9 +52,7 @@ void Transceiver::receive(int pipe, char *buffer, uint8_t length)
 {
     if (_radio.readable()){
         _radio.read(pipe, buffer, length);
-        serialConnection.printf("boem\n");
     }
-    else serialConnection.printf("biem\n");
 }
 
 void Transceiver::update(void)
