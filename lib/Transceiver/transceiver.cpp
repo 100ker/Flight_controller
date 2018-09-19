@@ -77,7 +77,11 @@ void Transceiver::update(void)
 void Transceiver::setAcknowledgePayload(int pipe)
 {
     uint8_t package[4];
-    package[0] = (*dataPtr).batteryLevel & 0xFF;
-    package[1] = (*dataPtr).batteryLevel >> 8;
-    _radio.writeAcknowledgePayload(pipe, &package[0], 2);
+    // BUG: 0 is unusable? ACK shifts 1 to 0 after transmission
+    package[1] = (*dataPtr).batteryLevel & 0xFF;
+    package[2] = (*dataPtr).batteryLevel >> 8;
+    //package[3] = 2;
+    //serialConnection.printf("Battery p0: %u \t", package[1]);
+    //serialConnection.printf("Battery p1: %u \t", package[2]);
+    _radio.writeAcknowledgePayload(pipe, &package[0], 4);
 }

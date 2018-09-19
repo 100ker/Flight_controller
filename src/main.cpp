@@ -96,12 +96,14 @@ void loadConfig(void){
 void flight(void)
 {   
     radio.update();
-    serialConnection.printf("Roll: %d \t", (int)data.imu.roll);
-    serialConnection.printf("Pitch: %d \t", (int)data.imu.pitch);
-    serialConnection.printf("Yaw: %d \n", (int)data.imu.yaw);
+    // serialConnection.printf("Throttle: %d \t", (int)data.remote.throttle);
+    // serialConnection.printf("Roll: %d \t", (int)data.remote.roll);
+    // serialConnection.printf("Pitch: %d \t", (int)data.remote.pitch);
+    // serialConnection.printf("Yaw: %d \n", (int)data.remote.yaw);
     imu.update();
     controller.update();
     data.batteryLevel = battery.read_u16();
+    serialConnection.printf("Battery: %d \n", (int)data.batteryLevel);
     radio.setAcknowledgePayload(0);
 }
 
