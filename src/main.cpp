@@ -1,206 +1,83 @@
 #include <mbed.h>
-#include "main.h"
+#include "Watchdog.hpp"
 #include <config.hpp>
-#include "iniparser.h"
+#include "serialHandler.hpp"
 #include "transceiver.h"
 #include "IMU.h"
 #include "controller.hpp"
-#include <iostream>
-#include <bitset>
+#include "helpers.hpp"
 
-DigitalOut led(LED1), led2(LED2), led3(LED3), led4(LED4);
+Serial pc(USBTX,USBRX);
+SerialHandler serial;
+DigitalOut led(LED1), led2(LED2), led3(LED3), led4(LED4), radioPower(p30);
 AnalogIn battery(p20);
 dataStruct data;
 configStruct config;
-Transceiver radio(p5, p6, p7, p9, p14, p10);
-Ticker ticker;
+Transceiver radio(p5, p6, p7, p9, p14);
+InterruptIn radioInterrupt(p10);
+Ticker controllerInterrupt, gyroInterrupt, ledTicker, angleInterrupt, batteryTicker;
 Controller controller(p24, p22, p21, p23);
 IMU imu;
-RawSerial serialConnection = RawSerial(USBTX,USBRX);
+LocalFileSystem local("local");
 
 uint8_t status;
 
-void rxInterrupt(void){
-    if (serialConnection.getc() == 'r')
-        {
-            radio.powerDown();
-            __NVIC_SystemReset();
-        }
+void batteryLevelUpdate(void){
+    data.batteryLevel.f = battery.read()*3.3*(81.6+476)/81.6;
 }
 
-void loadConfig(void){
-    LocalFileSystem local("local");
-    dictionary *dir = iniparser_load("/local/config.ini");
-
-    // Read config for radio
-    config.radioConfig.channel = iniparser_getint(dir, "radio:channel",101);
-    config.radioConfig.txAddress = iniparser_getlongint(dir, "radio:txaddress",0x7FFFFFFF);
-    config.radioConfig.rxAddress = iniparser_getlongint(dir, "radio:rxaddress",0x7FFFFFFF);
-    config.radioConfig.transferSize = iniparser_getint(dir, "radio:transfersize",10);
-
-    // Read config for ACRO mode
-    char * keysAcro[9];
-    const char ** keysAcroPtr = (const char **) &keysAcro;
-    keysAcroPtr = iniparser_getseckeys(dir, "acromode", keysAcroPtr);
-    for (int i = 0; i<=2; i++){
-        config.controllerConfig.acroModeConfig.Kp[i] = iniparser_getdouble(dir, (keysAcro[i]),0);
-    }
-    for (int i = 0; i<=2; i++){
-        config.controllerConfig.acroModeConfig.Ki[i] = iniparser_getdouble(dir, (keysAcro[i+3]),0);
-    }
-    for (int i = 0; i<=2; i++){
-        config.controllerConfig.acroModeConfig.Kd[i] = iniparser_getdouble(dir, (keysAcro[i+6]),0);
-    }
-
-    // Read config for stabilizing mode
-    char * keysStabilizing[9];
-    const char ** keysStabilizingPtr = (const char **) &keysStabilizing;
-    keysStabilizingPtr = iniparser_getseckeys(dir, "stabilizingmode", keysStabilizingPtr);
-    for (int i = 0; i<=2; i++){
-        config.controllerConfig.stabilizingModeConfig.Kp[i] = iniparser_getdouble(dir, (keysStabilizing[i]),0);
-    }
-    for (int i = 0; i<=2; i++){
-        config.controllerConfig.stabilizingModeConfig.Ki[i] = iniparser_getdouble(dir, (keysStabilizing[i+3]),0);
-    }
-    for (int i = 0; i<=2; i++){
-        config.controllerConfig.stabilizingModeConfig.Kd[i] = iniparser_getdouble(dir, (keysStabilizing[i+6]),0);
-    }
-
-    // Read config for motor direction compensation
-    char * keysSigns[12];
-    const char ** keysSignsPtr = (const char **) &keysSigns;
-    keysSignsPtr = iniparser_getseckeys(dir, "motordirections", keysSignsPtr);
-    for (int i = 0; i<=3; i++){
-        for (int j = 0; j<=2; j++){
-            config.controllerConfig.signs[i][j] = iniparser_getdouble(dir, (keysSigns[3*i+j]),0);
-        }
-    }
-
-    // Reading filter values
-    config.imuconfig.itg3200.a = iniparser_getdouble(dir, "itg3200:a",0);
-    config.imuconfig.itg3200.b = iniparser_getdouble(dir, "itg3200:b",0);
-    config.imuconfig.itg3200.c = iniparser_getdouble(dir, "itg3200:c",0);
-
-    config.imuconfig.hmc5883l.a = iniparser_getdouble(dir, "hmc5883l:a",0);
-    config.imuconfig.hmc5883l.b = iniparser_getdouble(dir, "hmc5883l:b",0);
-    config.imuconfig.hmc5883l.c = iniparser_getdouble(dir, "hmc5883l:c",0);
-
-    config.imuconfig.adxl345.a = iniparser_getdouble(dir, "adxl345:a",0);
-    config.imuconfig.adxl345.b = iniparser_getdouble(dir, "adxl345:b",0);
-    config.imuconfig.adxl345.c = iniparser_getdouble(dir, "adxl345:c",0);
-
-    config.tickerPeriod = (float) iniparser_getdouble(dir, "misc:tickerperiod",0.01);
-    iniparser_freedict(dir);
+void ledUpdate(void){
+    led4 = 1-led4;
 }
 
-void flight(void)
-{   
-    radio.update();
-    // serialConnection.printf("Throttle: %d \t", (int)data.remote.throttle);
-    // serialConnection.printf("Roll: %d \t", (int)data.remote.roll);
-    // serialConnection.printf("Pitch: %d \t", (int)data.remote.pitch);
-    // serialConnection.printf("Yaw: %d \n", (int)data.remote.yaw);
-    imu.update();
-    controller.update();
-    data.batteryLevel = battery.read_u16();
-    serialConnection.printf("Battery: %d \n", (int)data.batteryLevel);
-    radio.setAcknowledgePayload(0);
-}
-
-void checkThrottleLow(void)
-{
-    radio.update();
-    radio.setAcknowledgePayload(0);
-    if (data.remote.missedPackets > 200)
-    {
-        led = !led;
-    }
-    else
-    {
-        led = 1;
-        led2 = 1;
-        led3 = 0;
-        led4 = 0;
-    }
-    if (data.remote.throttle <= 25)
-    {
-        ticker.detach();
-        led = 1;
-        led2 = 1;
-        led3 = 1;
-        led4 = 1;
-        ticker.attach(&flight, config.tickerPeriod);
-    }
-}
-
-void checkThrottleHigh(void)
-{
-    radio.update();
-  
-    radio.setAcknowledgePayload(0);
-    if (data.remote.missedPackets > 200)
-    {
-        led = !led;
-    }
-    else
-    {
-        led = 1;
-        led2 = 1;
-        led3 = 0;
-        led4 = 0;
-    }
-
-    if (data.remote.throttle >= 1000)
-    {
-        ticker.detach();
-        led = 1;
-        led2 = 1;
-        led3 = 1;
-        led4 = 0;
-        ticker.attach(&checkThrottleLow, config.tickerPeriod);
-    }
-}
-
-void initialize(void)
+int main(void)
 {
     loadConfig();
-    led = 0;
-    led2 = 0;
-    led3 = 0;
+
+    serial.initialize(); 
+
+    radioPower=1;
+    wait(0.5);
+    status = radio.initialize();
+
+    if (status)
+    {
+        ledTicker.attach(&ledUpdate, 0.5);
+        while (status)
+        {
+            radioPower=0;
+            wait(0.5);
+            radioPower=1;
+            wait(0.5);
+            status = radio.initialize();
+        }
+        ledTicker.detach();
+    }
+
+    radioInterrupt.fall(callback(&radio, &Transceiver::interruptHandler));
+
+    status = imu.initialize();
+    if (status)
+    {
+        led2 = 1;
+        return 0;
+    }
+
+    ledTicker.attach(&ledUpdate, 0.5);
+    batteryTicker.attach(&batteryLevelUpdate, 0.1);
+
+    led4=1;
+    data.newPacket = false;
+    while(!data.newPacket){
+        data.batteryLevel.f = battery.read_u16();
+    }
+
+    ledTicker.detach();
     led4 = 0;
 
-    status = radio.initialize(config, &data);
-    if (status)
-    {
-        led = 1;
-        led2 = 0;
-        led3 = 0;
-        led4 = 1;
-        return;
-    }
+    controller.initialize();
 
-    led = 1;
-
-    status = imu.initialize(config, &data);
-    if (status)
-    {
-        led = 1;
-        led2 = 0;
-        led3 = 1;
-        led4 = 1;
-        return;
-    }
-    led2 = 1;
-
-    radio.update();
-
-    controller.initialize(&data, &config.controllerConfig);
-    ticker.attach(&checkThrottleHigh, config.tickerPeriod);
-
-}
-
-int main()
-{
-    serialConnection.attach(&rxInterrupt, Serial::RxIrq);
-    initialize();
+    controllerInterrupt.attach(callback(&controller, &Controller::update), 1.0/config.flightTickerFrequency);
+    gyroInterrupt.attach(callback(&imu, &IMU::updateGyro),1.0/config.gyroTickerFrequency);
+    angleInterrupt.attach(callback(&imu, &IMU::updateAngles),1.0/config.angleTickerFrequency);
 }

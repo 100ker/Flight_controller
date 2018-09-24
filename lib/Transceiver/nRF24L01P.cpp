@@ -35,7 +35,7 @@
 /**
  * Includes
  */
-#include "nRF24L01P.h"
+#include "nRF24L01P.hpp"
 
 /**
  * Defines
@@ -175,8 +175,7 @@ nRF24L01P::nRF24L01P(PinName mosi,
                      PinName miso,
                      PinName sck,
                      PinName csn,
-                     PinName ce,
-                     PinName irq) : spi_(mosi, miso, sck), nCS_(csn), ce_(ce), nIRQ_(irq) {
+                     PinName ce) : spi_(mosi, miso, sck), nCS_(csn), ce_(ce) {
 
     mode = _NRF24L01P_MODE_UNKNOWN;
 
@@ -613,7 +612,7 @@ void nRF24L01P::setRxAddress(unsigned long long address, int width, int pipe) {
 
     nCS_ = 0;
 
-    int status = spi_.write(cn);
+    spi_.write(cn);
 
     while ( width-- > 0 ) {
 
@@ -690,7 +689,7 @@ void nRF24L01P::setTxAddress(unsigned long long address, int width) {
 
     nCS_ = 0;
 
-    int status = spi_.write(cn);
+    spi_.write(cn);
 
     while ( width-- > 0 ) {
 
@@ -756,7 +755,7 @@ unsigned long long nRF24L01P::getRxAddress(int pipe) {
 
     nCS_ = 0;
 
-    int status = spi_.write(cn);
+    spi_.write(cn);
 
     for ( int i=0; i<width; i++ ) {
 
@@ -812,7 +811,7 @@ unsigned long long nRF24L01P::getTxAddress(void) {
 
     nCS_ = 0;
 
-    int status = spi_.write(cn);
+    spi_.write(cn);
 
     for ( int i=0; i<width; i++ ) {
 
@@ -846,61 +845,32 @@ bool nRF24L01P::readable(int pipe) {
 
 
 int nRF24L01P::write(int pipe, char *data, int count) {
-	// Serial pc(USBTX, USBRX); // tx, rx
     // Note: the pipe number is ignored in a Transmit / write
 
     //
     // Save the CE state
     //
-    int originalCe = ce_;
-    disable();
+    // int originalCe = ce_;
+    // disable();
 
     if ( count <= 0 ) return 0;
-	// pc.printf("1\r\n");
     if ( count > _NRF24L01P_TX_FIFO_SIZE ) count = _NRF24L01P_TX_FIFO_SIZE;
-		// pc.printf("2\r\n");
+
     // Clear the Status bit
-    setRegister(_NRF24L01P_REG_STATUS, _NRF24L01P_STATUS_TX_DS);
-		// pc.printf("3\r\n");
+    //setRegister(_NRF24L01P_REG_STATUS, _NRF24L01P_STATUS_TX_DS);
     nCS_ = 0;
 
-    int status = spi_.write(_NRF24L01P_SPI_CMD_W_TX_PYLD_NO_ACK);
-		// pc.printf("4\r\n");
-		// pc.printf("%02x\r\n",status);
+    spi_.write(_NRF24L01P_SPI_CMD_WR_TX_PAYLOAD);
+
     for ( int i = 0; i < count; i++ ) {
 
         spi_.write(*data++);
 
     }
-	// pc.printf("5\r\n");
-	// pc.printf("%02x\r\n",status);
+
     nCS_ = 1;
 
-    int originalMode = mode;
-    setTransmitMode();
-	// pc.printf("6\r\n");
     enable();
-    wait_us(_NRF24L01P_TIMING_Thce_us);
-    disable();
-	// pc.printf("7\r\n");
-//	wait_us(100);
-    while ( !( getStatusRegister() & _NRF24L01P_STATUS_TX_DS ) ) {
-//		pc.printf("%02x\r\n",getStatusRegister());
-//        // Wait for the transfer to complete
-//
-    }
-	// pc.printf("8\r\n");
-    // Clear the Status bit
-    setRegister(_NRF24L01P_REG_STATUS, _NRF24L01P_STATUS_TX_DS);
-
-    if ( originalMode == _NRF24L01P_MODE_RX ) {
-
-        setReceiveMode();
-
-    }
-
-    ce_ = originalCe;
-    wait_us( _NRF24L01P_TIMING_Tpece2csn_us );
 
     return count;
 
@@ -924,7 +894,7 @@ int nRF24L01P::read(int pipe, char *data, int count) {
 
         nCS_ = 0;
 
-        int status = spi_.write(_NRF24L01P_SPI_CMD_R_RX_PL_WID);
+        spi_.write(_NRF24L01P_SPI_CMD_R_RX_PL_WID);
 
         int rxPayloadWidth = spi_.write(_NRF24L01P_SPI_CMD_NOP);
 
@@ -936,9 +906,9 @@ int nRF24L01P::read(int pipe, char *data, int count) {
 
             nCS_ = 0;
 
-            int status = spi_.write(_NRF24L01P_SPI_CMD_FLUSH_RX);
+            spi_.write(_NRF24L01P_SPI_CMD_FLUSH_RX);
 
-            int rxPayloadWidth = spi_.write(_NRF24L01P_SPI_CMD_NOP);
+            spi_.write(_NRF24L01P_SPI_CMD_NOP);
 
             nCS_ = 1;
 
@@ -953,7 +923,7 @@ int nRF24L01P::read(int pipe, char *data, int count) {
 
             nCS_ = 0;
 
-            int status = spi_.write(_NRF24L01P_SPI_CMD_RD_RX_PAYLOAD);
+            spi_.write(_NRF24L01P_SPI_CMD_RD_RX_PAYLOAD);
 
             for ( int i = 0; i < count; i++ ) {
 
@@ -1040,6 +1010,22 @@ int nRF24L01P::getStatusRegister(void) {
 
     return status;
 
+}
+
+void nRF24L01P::flushTX(void){
+    nCS_ = 0;
+
+    spi_.write(_NRF24L01P_SPI_CMD_FLUSH_TX);
+
+    nCS_ = 1;
+}
+
+void nRF24L01P::flushRX(void){
+    nCS_ = 0;
+
+    spi_.write(_NRF24L01P_SPI_CMD_FLUSH_RX);
+
+    nCS_ = 1;
 }
 
 int nRF24L01P::writeAcknowledgePayload(int pipe, uint8_t * package, uint8_t length){

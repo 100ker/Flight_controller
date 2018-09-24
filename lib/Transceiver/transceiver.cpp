@@ -1,23 +1,15 @@
-#include <transceiver.h>
 #include <mbed.h>
+#include <transceiver.h>
 #include <iostream>
-#include <bitset>
-#include "../../src/main.h"
 
-
-uint8_t Transceiver::initialize(configStruct config, dataStruct *data)
+uint8_t Transceiver::initialize(void)
 {
-    _radio.powerUp();
+    packetReceived = false;
 
     // Check is status register is correct, if not, a full reboot is needed :(
     uint8_t statRegister = _radio.getStatusRegister();
     if ((statRegister != 0x08) && (statRegister != 0x0e) && (statRegister != 0x0f))
     {
-        // _radio.disable();
-        // _radio.powerDown();
-
-        // _radio.setRegister(,0x07);
-        std::cout << std::hex << bitset<8>(statRegister) << std::endl;
         return 1;
     }
     _radio.setRfFrequency(2400 + config.radioConfig.channel);
@@ -28,60 +20,81 @@ uint8_t Transceiver::initialize(configStruct config, dataStruct *data)
     _radio.setTxAddress(config.radioConfig.txAddress);
     _radio.setAirDataRate(NRF24L01P_DATARATE_250_KBPS);
     _radio.setReceiveMode();
-
+    _radio.powerUp();
     _radio.enable();
     transferSize = config.radioConfig.transferSize;
-    rxData = new char[transferSize];
-    dataPtr = data;
+    rxBuffer = new char[transferSize];
+
     return 0;
 }
 
-void Transceiver::powerDown(){
-    _radio.disable();
-    _radio.powerDown();
-}
+void Transceiver::interruptHandler(void){
+    status = _radio.getStatusRegister();
 
-bool Transceiver::messageAvailable()
-{
-    int status = 0;
-    status = _radio.readable(NRF24L01P_PIPE_P0);
-    return status;
-}
-
-void Transceiver::receive(int pipe, char *buffer, uint8_t length)
-{
-    if (_radio.readable()){
-        _radio.read(pipe, buffer, length);
+    if (status == 0)
+    { //data not ready?
+        while (status == 0)
+        {
+            status = _radio.getStatusRegister();
+        }
     }
+    if (status & 1)
+    { // TX FIFO full
+        _radio.disable();
+        _radio.flushTX();
+    }
+    if (status & 16)
+    { // max TX retransmits
+        _radio.disable();
+        _radio.flushTX();
+        _radio.setRegister(0x07, 16);
+        signalStrength = movingAvg(signalStrengthArray, &sum, pos, sizeof(signalStrengthArray), 0);
+        pos++;
+        if (pos >= sizeof(signalStrengthArray) - 1){
+            pos = 0;
+        }
+    }
+    if (status & 32)
+    { // TX sent (ACK package available if autoAck is enabled)
+        _radio.disable();
+        _radio.flushTX();
+        _radio.setRegister(0x07, 32);
+        signalStrength = movingAvg(signalStrengthArray, &sum, pos, sizeof(signalStrengthArray), 100);
+        pos++;
+        if (pos >= sizeof(signalStrengthArray) - 1){
+            pos = 0;
+        }
+    }
+    if (status & 64)
+    { // RX received
+        data.newPacket = true;
+        _radio.read(0, rxBuffer, transferSize);
+        _radio.setRegister(0x07, 64);
+        send(0,(char * )data.batteryLevel.u,2);
+        for (int i = 0; i<=15;i++){
+            rxData[i/4].c[i & 3] = rxBuffer[i];
+        }
+        data.remote.throttle = rxData[0].f;
+        data.remote.roll = rxData[1].f;
+        data.remote.pitch = rxData[2].f;
+        data.remote.yaw = rxData[3].f;
+        data.armMotor = (bool)((rxBuffer[16] >> 1) & 0x01);
+        data.acroMode = 1-(bool)(rxBuffer[16] & 0x01);
+        _radio.flushRX();
+    }
+    
 }
 
-void Transceiver::update(void)
-{
-    if (messageAvailable())
-    {
-        receive(NRF24L01P_PIPE_P0, rxData, transferSize);
-        (*dataPtr).remote.throttle = (uint16_t)rxData[1] << 8 | rxData[0];
-        (*dataPtr).remote.roll = (float)((int16_t)(rxData[3] << 8 | rxData[2]));
-        (*dataPtr).remote.pitch = (float)((int16_t)(rxData[5] << 8 | rxData[4]));
-        (*dataPtr).remote.yaw = (float)((int16_t)(rxData[7] << 8 | rxData[6]));
-        (*dataPtr).acroMode = 0;//((bool)rxData[9] >> 1) & 0x01;
-        (*dataPtr).armMotor = 1;//(bool)rxData[9] & 0x01;
-        (*dataPtr).remote.missedPackets = 0;
-    }
-    else
-    {
-        (*dataPtr).remote.missedPackets++;
-    }
+void Transceiver::send(uint8_t pipe, char * buffer, uint8_t length){
+    _radio.write(pipe, buffer, length);
 }
 
-void Transceiver::setAcknowledgePayload(int pipe)
+uint8_t Transceiver::movingAvg(uint8_t *ptrArrNumbers, uint16_t *ptrSum, uint8_t pos, uint16_t len, uint8_t nextNum)
 {
-    uint8_t package[4];
-    // BUG: 0 is unusable? ACK shifts 1 to 0 after transmission
-    package[1] = (*dataPtr).batteryLevel & 0xFF;
-    package[2] = (*dataPtr).batteryLevel >> 8;
-    //package[3] = 2;
-    //serialConnection.printf("Battery p0: %u \t", package[1]);
-    //serialConnection.printf("Battery p1: %u \t", package[2]);
-    _radio.writeAcknowledgePayload(pipe, &package[0], 4);
+  //Subtract the oldest number from the prev sum, add the new number
+  *ptrSum = *ptrSum - ptrArrNumbers[pos] + nextNum;
+  //Assign the nextNum to the position in the array
+  ptrArrNumbers[pos] = nextNum;
+  //return the average
+  return *ptrSum / len;
 }

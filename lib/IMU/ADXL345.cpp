@@ -1,10 +1,11 @@
 #include "ADXL345.h"
 #include <iostream>
 
-int ADXL345::initialize(uint16_t gRangeInput, float xFilter, float yFilter, float zFilter){
-    alphaX = xFilter;
-    alphaY = yFilter;
-    alphaZ = zFilter;
+int ADXL345::initialize(uint16_t gRangeInput, ADXL345ConfigStruct config)
+{
+    alphaX = config.a;
+    alphaY = config.b;
+    alphaZ = config.c;
     Fx = 0.0;
     Fy = 0.0;
     Fz = 0.0;
@@ -14,56 +15,69 @@ int ADXL345::initialize(uint16_t gRangeInput, float xFilter, float yFilter, floa
     buffer[0] = REG_DATA_FORMAT;
     buffer[1] = convertGRange();
 
-    int status = i2c.write(ADXL345_ADDRESS,buffer,2);
-    if (status != 0){
-//        pc.printf("%02x%02x\r\n",buffer[0],buffer[1]);
+    int status = i2c.write(ADXL345_ADDRESS, buffer, 2);
+    if (status != 0)
+    {
         return 1;
     }
 
     buffer[0] = REG_BW_RATE;
-    buffer[1] = CMD_DATA_RATE_200HZ;
-    status = i2c.write(ADXL345_ADDRESS,buffer,2);
-    if (status != 0){
+    buffer[1] = CMD_DATA_RATE_3200HZ;
+    status = i2c.write(ADXL345_ADDRESS, buffer, 2);
+    if (status != 0)
+    {
         return 2;
     }
 
     buffer[0] = REG_POWER_CTRL;
     buffer[1] = CMD_MEASUREMENT_MODE;
 
-    status = i2c.write(ADXL345_ADDRESS,buffer,2);
-    if (status != 0){
+    status = i2c.write(ADXL345_ADDRESS, buffer, 2);
+    if (status != 0)
+    {
         return 3;
     }
 
-//    status = selfTest();
-//    if (status != 0){
-//        return status;
-//    }
+    buffer[0] = REG_FIFO_CTL;
+    buffer[1] = CMD_FIFO_STREAM;
+    status = i2c.write(ADXL345_ADDRESS, buffer, 2);
+    if (status != 0)
+    {
+        return 4;
+    }
+
+    //    status = selfTest();
+    //    if (status != 0){
+    //        return status;
+    //    }
 
     return 0;
 }
 
-uint8_t ADXL345::convertGRange(){
+uint8_t ADXL345::convertGRange()
+{
     uint8_t value = 0x00;
-    switch (gRange) {
-        case 2:
-            value = 0x00;
-            break;
-        case 4:
-            value = 0x01;
-            break;
-        case 8:
-            value = 0x02;
-            break;
-        case 16:
-            value = 0x03;
-            break;
-        }
+    switch (gRange)
+    {
+    case 2:
+        value = 0x00;
+        break;
+    case 4:
+        value = 0x01;
+        break;
+    case 8:
+        value = 0x02;
+        break;
+    case 16:
+        value = 0x03;
+        break;
+    }
 
     return value;
 }
 
-int ADXL345::selfTest(void){
+int ADXL345::selfTest(void)
+{
     // buffer[0] = REG_DATA_FORMAT;
     // buffer[1] = CMD_DATA_FORMAT_FULL_RES_16G;
 
@@ -139,25 +153,24 @@ int ADXL345::selfTest(void){
     return 0;
 }
 
-int ADXL345::read(float * fx, float * fy, float * fz){
+int ADXL345::read(float *fx, float *fy, float *fz)
+{
     // write register address to device
     buffer[0] = REG_DATA_X;
-    i2c.write(ADXL345_ADDRESS,buffer,1,true);
-
-//    Serial pc(USBTX, USBRX); // tx, rx
+    i2c.write(ADXL345_ADDRESS, buffer, 1, true);
 
     // request data from device
-    i2c.read(ADXL345_ADDRESS,buffer,6);
-//    pc.printf("%02x%02x%02x%02x\r\n",buffer[0],buffer[1],buffer[2],buffer[3]);
+    i2c.read(ADXL345_ADDRESS, buffer, 6);
+
     // calculate data from raw readings
-    x = ((float)((int16_t)(buffer[1]<<8)+buffer[0]))*gRange/(1023.0);
-    y = ((float)((int16_t)(buffer[3]<<8)+buffer[2]))*gRange/(1023.0);
-    z = ((float)((int16_t)(buffer[5]<<8)+buffer[4]))*gRange/(1023.0);
-    
+    x = ((float)((int16_t)(buffer[1] << 8) + buffer[0])) * gRange / (512.0);
+    y = ((float)((int16_t)(buffer[3] << 8) + buffer[2])) * gRange / (512.0);
+    z = ((float)((int16_t)(buffer[5] << 8) + buffer[4])) * gRange / (512.0);
+
     // filter data
-    *fx = x * alphaX + Fx * (1.0-alphaX);
-    *fy = y * alphaY + Fy * (1.0-alphaY);
-    *fz = z * alphaZ + Fz * (1.0-alphaZ);
+    *fx = x * alphaX + Fx * (1.0 - alphaX);
+    *fy = y * alphaY + Fy * (1.0 - alphaY);
+    *fz = z * alphaZ + Fz * (1.0 - alphaZ);
 
     // store filtered data for next calculation
     Fx = *fx;
@@ -167,12 +180,12 @@ int ADXL345::read(float * fx, float * fy, float * fz){
     return 0;
 }
 
-int ADXL345::whoAmI(void){
+int ADXL345::whoAmI(void)
+{
     buffer[0] = 0x00;
-//    buffer[1] = convertGRange(gRange);
+    //    buffer[1] = convertGRange(gRange);
 
-    i2c.write(ADXL345_ADDRESS,buffer,1,true);
-    i2c.read(ADXL345_ADDRESS,buffer,1);
+    i2c.write(ADXL345_ADDRESS, buffer, 1, true);
+    i2c.read(ADXL345_ADDRESS, buffer, 1);
     return buffer[0];
-
 }

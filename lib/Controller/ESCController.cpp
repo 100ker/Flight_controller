@@ -5,11 +5,12 @@
 
 void ESCController::initialize(void)
 {
-    pwm.period_us(4000);
+    pwm.period_us(1000);
     pwm.pulsewidth_us(125); // 125 us idle
 }
 
-void ESCController::update(uint8_t value)
+void ESCController::update(float value)
 {
-    pwm.pulsewidth_us(min(max(value + 125, 125), 150));
+    pwm.pulsewidth_us(min(max(value + 125.0, 125.0), 250.0));
 }
+

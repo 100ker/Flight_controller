@@ -5,16 +5,18 @@
 
 struct remoteStruct
 {
-    uint16_t throttle;
-    float roll;
-    float pitch;
-    float yaw;
-    uint16_t missedPackets;
+    volatile float throttle;
+    volatile float roll;
+    volatile float pitch;
+    volatile float yaw;
+    volatile bool signalLost;
+    volatile uint16_t missedPackets;
 
     remoteStruct() : throttle(0),
                      roll(0),
                      pitch(0),
-                     yaw(0)
+                     yaw(0),
+                     signalLost(false)
     {
     }
 };
@@ -29,16 +31,23 @@ struct imuStruct
     float yawVelocity;
 };
 
+typedef union _batteryLevelUnion {
+    uint16_t f;
+    uint8_t u[2];
+} _batteryLevel;
+
 struct dataStruct
 {
     remoteStruct remote;
     imuStruct imu;
-    uint16_t batteryLevel;
-    bool acroMode;
-    bool armMotor;
+    _batteryLevel batteryLevel;
+    volatile bool acroMode;
+    volatile bool armMotor;
+    volatile bool newPacket;
 
-    dataStruct() : acroMode(true),
-                   armMotor(false)
+    dataStruct() : acroMode(false),
+                   armMotor(false),
+                   newPacket(false)
     {
     }
 };
@@ -51,43 +60,56 @@ struct radioConfigStruct
     uint8_t transferSize;
 };
 
-struct acroModeStruct
+struct rateControllerStruct
 {
-    float Kp[3], Ki[3], Kd[3];
+    float KpRoll, KiRoll, KdRoll;
+    float KpPitch, KiPitch, KdPitch;
+    float KpYaw, KiYaw, KdYaw;
 };
 
-struct stabilizingModeStruct
+struct angleControllerStruct
 {
-    float Kp[3], Ki[3], Kd[3];
+    float KpRoll, KiRoll, KdRoll;
+    float KpPitch, KiPitch, KdPitch;
 };
 
 struct controllerConfigStruct
 {
-    acroModeStruct acroModeConfig;
-    stabilizingModeStruct stabilizingModeConfig;
+    rateControllerStruct rateController;
+    angleControllerStruct angleController;
     int8_t signs[4][3];
+    float anglePrescalerRoll;
+    float anglePrescalerPitch;
+    float ratePrescalerRoll;
+    float ratePrescalerPitch;
+    float ratePrescalerYaw;
+    float angleImuPrescalerRoll;
+    float angleImuPrescalerPitch;
+    float rateImuPrescalerRoll;
+    float rateImuPrescalerPitch;
+    float rateImuPrescalerYaw;
 };
 
 struct ITG3200ConfigStruct
-    {
-        float a;
-        float b;
-        float c;
-    };
+{
+    float a;
+    float b;
+    float c;
+};
 
 struct HMC5883LConfigStruct
-    {
-        float a;
-        float b;
-        float c;
-    };
+{
+    float a;
+    float b;
+    float c;
+};
 
 struct ADXL345ConfigStruct
-    {
-        float a;
-        float b;
-        float c;
-    };
+{
+    float a;
+    float b;
+    float c;
+};
 
 struct imuConfigStruct
 {
@@ -103,7 +125,12 @@ struct configStruct
     radioConfigStruct radioConfig;
     controllerConfigStruct controllerConfig;
     imuConfigStruct imuconfig;
-    float tickerPeriod;
+    uint16_t flightTickerFrequency;
+    uint16_t gyroTickerFrequency;
+    uint16_t angleTickerFrequency;
 };
+
+extern dataStruct data;
+extern configStruct config;
 
 #endif

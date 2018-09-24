@@ -269,7 +269,7 @@ void iniparser_dump_ini(const dictionary * d, FILE * f)
         for (i=0 ; i<d->size ; i++) {
             if (d->key[i]==NULL)
                 continue ;
-            fprintf(f, "%s = %s\n", d->key[i], d->val[i]);
+            fprintf(f, "%s=%s\r\n", d->key[i], d->val[i]);
         }
         return ;
     }
@@ -277,7 +277,7 @@ void iniparser_dump_ini(const dictionary * d, FILE * f)
         secname = iniparser_getsecname(d, i) ;
         iniparser_dumpsection_ini(d, secname, f);
     }
-    fprintf(f, "\n");
+    fprintf(f, "\r\n");
     return ;
 }
 
@@ -303,19 +303,19 @@ void iniparser_dumpsection_ini(const dictionary * d, const char * s, FILE * f)
     if (! iniparser_find_entry(d, s)) return ;
 
     seclen  = (int)strlen(s);
-    fprintf(f, "\n[%s]\n", s);
+    fprintf(f, "\r\n[%s]\r\n", s);
     sprintf(keym, "%s:", s);
     for (j=0 ; j<d->size ; j++) {
         if (d->key[j]==NULL)
             continue ;
         if (!strncmp(d->key[j], keym, seclen+1)) {
             fprintf(f,
-                    "%-30s = %s\n",
+                    "%-30s = %s\r\n",
                     d->key[j]+seclen+1,
                     d->val[j] ? d->val[j] : "");
         }
     }
-    fprintf(f, "\n");
+    fprintf(f, "\r\n");
     return ;
 }
 

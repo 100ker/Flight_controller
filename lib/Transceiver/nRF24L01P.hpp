@@ -95,7 +95,7 @@ public:
      * @param ce mbed pin to use for the chip enable line.
      * @param irq mbed pin to use for the interrupt request line.
      */
-    nRF24L01P(PinName mosi, PinName miso, PinName sck, PinName csn, PinName ce, PinName irq = NC);
+    nRF24L01P(PinName mosi, PinName miso, PinName sck, PinName csn, PinName ce);
 
     /**
      * Set the RF frequency.
@@ -331,12 +331,16 @@ public:
 
     int writeAcknowledgePayload(int pipe, uint8_t * package, uint8_t length);
 
+    void flushTX(void);
+    void flushRX(void);
+
 private:
     SPI         spi_;
     DigitalOut  nCS_;
     DigitalOut  ce_;
-    InterruptIn nIRQ_;
 
+    void spiInterruptHandler(int);
+    bool transferComplete;
     int mode;
 
 };
