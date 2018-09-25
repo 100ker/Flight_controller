@@ -92,5 +92,7 @@ int main(void)
         // pc.printf("Rimu: %.6f\t", data.imu.roll);
         // pc.printf("Pimu: %.6f\t", data.imu.pitch);
         // pc.printf("Yimu: %.6f\n", data.imu.yaw);
+    //     pc.printf("armed: %d\t", data.armMotor);
+    //     pc.printf("acro: %d\n", data.acroMode);        
     // }
 }
