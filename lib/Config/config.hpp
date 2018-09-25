@@ -5,10 +5,10 @@
 
 struct remoteStruct
 {
-    volatile float throttle;
-    volatile float roll;
-    volatile float pitch;
-    volatile float yaw;
+    volatile uint16_t throttle;
+    volatile int16_t roll;
+    volatile int16_t pitch;
+    volatile int16_t yaw;
     volatile bool signalLost;
     volatile uint16_t missedPackets;
 

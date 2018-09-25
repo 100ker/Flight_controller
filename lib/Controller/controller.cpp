@@ -13,11 +13,36 @@ void Controller::initialize(void)
     setpoint[2] = 0;
     setpoint[3] = 0;
 
-    pidRoll.initialize(config.controllerConfig.angleController.KpRoll, config.controllerConfig.angleController.KiRoll, config.controllerConfig.angleController.KdRoll, 1.0/config.flightTickerFrequency, 50.0, -50.0);
-    pidRollVelocity.initialize(config.controllerConfig.rateController.KpRoll, config.controllerConfig.rateController.KiRoll, config.controllerConfig.rateController.KdRoll, 1.0/config.flightTickerFrequency, 50.0, -50.0);
-    pidPitch.initialize(config.controllerConfig.angleController.KpPitch, config.controllerConfig.angleController.KiPitch, config.controllerConfig.angleController.KdPitch, 1.0/config.flightTickerFrequency, 50.0, -50.0);
-    pidPitchVelocity.initialize(config.controllerConfig.rateController.KpPitch, config.controllerConfig.rateController.KiPitch, config.controllerConfig.rateController.KdPitch, 1.0/config.flightTickerFrequency, 50.0, -50.0);
-    pidYawVelocity.initialize(config.controllerConfig.rateController.KpYaw, config.controllerConfig.rateController.KiYaw, config.controllerConfig.rateController.KdYaw, 0.001, 50.0, -50.0);
+    pidRoll.initialize(config.controllerConfig.angleController.KpRoll, 
+                       config.controllerConfig.angleController.KiRoll, 
+                       config.controllerConfig.angleController.KdRoll, 
+                       1.0/config.flightTickerFrequency, 
+                       50.0, 
+                       -50.0);
+    pidRollVelocity.initialize(config.controllerConfig.rateController.KpRoll, 
+                               config.controllerConfig.rateController.KiRoll, 
+                               config.controllerConfig.rateController.KdRoll, 
+                               1.0/config.flightTickerFrequency, 
+                               50.0, 
+                               -50.0);
+    pidPitch.initialize(config.controllerConfig.angleController.KpPitch, 
+                        config.controllerConfig.angleController.KiPitch, 
+                        config.controllerConfig.angleController.KdPitch, 
+                        1.0/config.flightTickerFrequency, 
+                        50.0, 
+                        -50.0);
+    pidPitchVelocity.initialize(config.controllerConfig.rateController.KpPitch, 
+                                config.controllerConfig.rateController.KiPitch, 
+                                config.controllerConfig.rateController.KdPitch, 
+                                1.0/config.flightTickerFrequency, 
+                                50.0, 
+                                -50.0);
+    pidYawVelocity.initialize(config.controllerConfig.rateController.KpYaw, 
+                              config.controllerConfig.rateController.KiYaw, 
+                              config.controllerConfig.rateController.KdYaw, 
+                              1.0/config.flightTickerFrequency, 
+                              50.0, 
+                              -50.0);
 }
 
 void Controller::update(void)
@@ -26,10 +51,10 @@ void Controller::update(void)
     {
         if (data.newPacket)
         {
-            throttleRemote = data.remote.throttle;
-            rollRemote = data.remote.roll;
-            pitchRemote = data.remote.pitch;
-            yawRemote = data.remote.yaw;
+            throttleRemote = ((float)data.remote.throttle)/65536.0f;
+            rollRemote = ((float)data.remote.roll)/32768.0f;
+            pitchRemote = ((float)data.remote.pitch)/32768.0f;
+            yawRemote = ((float)data.remote.yaw)/32768.0f;
             data.newPacket = false;
         }
 

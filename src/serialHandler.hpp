@@ -8,7 +8,7 @@ class SerialHandler
     SerialHandler() : _connection(USBTX, USBRX){};
     void initialize(void)
     {
-        _connection.baud(128000);
+        _connection.baud(9600);
         _connection.attach(callback(this, &SerialHandler::rxInterruptHandler), Serial::RxIrq);
         //_connection.putc('a');
         // _connection.attach(callback(this, &SerialHandler::txInterruptHandler), Serial::TxIrq);

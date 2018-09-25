@@ -21,8 +21,8 @@ void loadConfig(void){
     // Read remote prescalers
     config.controllerConfig.anglePrescalerRoll = (float)iniparser_getdouble(dir, "anglecontroller:prescaler_roll",0);
     config.controllerConfig.anglePrescalerPitch = (float)iniparser_getdouble(dir, "anglecontroller:prescaler_pitch",0);
-    config.controllerConfig.angleImuPrescalerRoll = (float)iniparser_getdouble(dir, "controller:prescaler_rollangle_imu",0);
-    config.controllerConfig.angleImuPrescalerPitch = (float)iniparser_getdouble(dir, "controller:prescaler_pitchangle_imu",0);
+    config.controllerConfig.angleImuPrescalerRoll = (float)iniparser_getdouble(dir, "anglecontroller:prescaler_rollangle_imu",0);
+    config.controllerConfig.angleImuPrescalerPitch = (float)iniparser_getdouble(dir, "anglecontroller:prescaler_pitchangle_imu",0);
 
     config.controllerConfig.ratePrescalerRoll = (float)iniparser_getdouble(dir, "ratecontroller:prescaler_roll",0);
     config.controllerConfig.ratePrescalerPitch = (float)iniparser_getdouble(dir, "ratecontroller:prescaler_pitch",0);

@@ -23,7 +23,7 @@ LocalFileSystem local("local");
 uint8_t status;
 
 void batteryLevelUpdate(void){
-    data.batteryLevel.f = battery.read()*3.3*(81.6+476)/81.6;
+        data.batteryLevel.f = battery.read_u16();
 }
 
 void ledUpdate(void){
@@ -79,5 +79,12 @@ int main(void)
 
     controllerInterrupt.attach(callback(&controller, &Controller::update), 1.0/config.flightTickerFrequency);
     gyroInterrupt.attach(callback(&imu, &IMU::updateGyro),1.0/config.gyroTickerFrequency);
-    angleInterrupt.attach(callback(&imu, &IMU::updateAngles),1.0/config.angleTickerFrequency);
+    //angleInterrupt.attach(callback(&imu, &IMU::updateAngles),1.0/config.angleTickerFrequency);
+
+    while(1){      
+        pc.printf("Tesc: %.6f\t", ((float)data.remote.throttle)/65536.0f);
+        pc.printf("Resc: %.6f\t", ((float)data.remote.roll)/32768.0f);
+        pc.printf("Pesc: %.6f\t", ((float)data.remote.pitch)/32768.0f);
+        pc.printf("Yesc: %.6f\n", ((float)data.remote.yaw)/32768.0f);
+    }
 }

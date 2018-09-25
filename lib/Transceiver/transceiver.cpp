@@ -72,7 +72,7 @@ void Transceiver::interruptHandler(void){
         _radio.setRegister(0x07, 64);
         send(0,(char * )data.batteryLevel.u,2);
         for (int i = 0; i<=15;i++){
-            rxData[i/4].c[i & 3] = rxBuffer[i];
+            rxData[i/2].c[i & 1] = rxBuffer[i];
         }
         data.remote.throttle = rxData[0].f;
         data.remote.roll = rxData[1].f;

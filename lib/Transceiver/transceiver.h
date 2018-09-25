@@ -6,7 +6,7 @@ class Transceiver
 {
   private:
     typedef union _floatUintUnion {
-        uint16_t f;
+        int16_t f;
         char c[2];
     } _floatUint;
 
