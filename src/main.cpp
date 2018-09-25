@@ -16,7 +16,7 @@ configStruct config;
 Transceiver radio(p5, p6, p7, p9, p14);
 InterruptIn radioInterrupt(p10);
 Ticker controllerInterrupt, gyroInterrupt, ledTicker, angleInterrupt, batteryTicker;
-Controller controller(p24, p22, p21, p23);
+Controller controller(p22, p24, p23, p21); // p21 = fl, p22 = fr, p23 = rl, p24 = rr
 IMU imu;
 LocalFileSystem local("local");
 
@@ -81,16 +81,16 @@ int main(void)
     gyroInterrupt.attach(callback(&imu, &IMU::updateGyro),1.0/config.gyroTickerFrequency);
     angleInterrupt.attach(callback(&imu, &IMU::updateAngles),1.0/config.angleTickerFrequency);
 
-    while(1){      
+    // while(1){      
         // pc.printf("Tesc: %.6f\t", ((float)data.remote.throttle)/65536.0f);
         // pc.printf("Resc: %.6f\t", ((float)data.remote.roll)/32768.0f);
         // pc.printf("Pesc: %.6f\t", ((float)data.remote.pitch)/32768.0f);
         // pc.printf("Yesc: %.6f\n", ((float)data.remote.yaw)/32768.0f);
-        pc.printf("Rimu: %.6f\t", data.imu.rollVelocity);
-        pc.printf("Pimu: %.6f\t", data.imu.pitchVelocity);
-        pc.printf("Yimu: %.6f\t", data.imu.yawVelocity);        
-        pc.printf("Rimu: %.6f\t", data.imu.roll);
-        pc.printf("Pimu: %.6f\t", data.imu.pitch);
-        pc.printf("Yimu: %.6f\n", data.imu.yaw);
-    }
+        // pc.printf("Rimu: %.6f\t", data.imu.rollVelocity);
+        // pc.printf("Pimu: %.6f\t", data.imu.pitchVelocity);
+        // pc.printf("Yimu: %.6f\t", data.imu.yawVelocity);        
+        // pc.printf("Rimu: %.6f\t", data.imu.roll);
+        // pc.printf("Pimu: %.6f\t", data.imu.pitch);
+        // pc.printf("Yimu: %.6f\n", data.imu.yaw);
+    // }
 }

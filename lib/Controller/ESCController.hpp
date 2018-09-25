@@ -6,7 +6,7 @@
 
 class ESCController{
     private:
-    FastPWM pwm;
+    PwmOut pwm;//FastPWM pwm;
 
     public:
     ESCController(PinName pin): pwm(pin) {};
