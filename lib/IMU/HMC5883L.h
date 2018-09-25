@@ -6,7 +6,7 @@
 class HMC5883L{
     private:
     // address and register address values
-        static const int HMC5883L_ADDRESS = (0x1E<<1);
+        static const int HMC5883L_ADDRESS = (0xD<<1); //previously 0x1E, check this!
         static const int REG_CONFIG_A = 0x00;
         static const int REG_CONFIG_B = 0x01;
         static const int REG_MODE = 0x02;

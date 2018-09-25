@@ -62,7 +62,7 @@ void Controller::update(void)
         roll = roll * (1 - 0.1) + rollRemote * 0.1;
         pitch = pitch * (1 - 0.1) + pitchRemote * 0.1;
         yaw = yaw * (1 - 0.1) + yawRemote * 0.1;
-        if (data.acroMode)
+        if (1)//data.acroMode)
         {
             velocitySetpoint[0] = roll*config.controllerConfig.ratePrescalerRoll;
             velocitySetpoint[1] = pitch*config.controllerConfig.ratePrescalerPitch;

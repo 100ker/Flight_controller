@@ -49,9 +49,9 @@ class ITG3200
     int initialize(ITG3200ConfigStruct config);
     ITG3200() : i2c(p28, p27) {}
     int read(float *temp, float *fx, float *fy, float *fz);
-    float rollOffset = -3.205242;
-    float pitchOffset = 0.335648;
-    float yawOffset = -0.63922;
+    float rollOffset = 2.724154239;
+    float pitchOffset = -5.056748483;
+    float yawOffset = -0.789122;
 };
 
 #endif
